@@ -1,5 +1,9 @@
+HOST = input("Your IP> ") 
+H_PORT = int(input("Your Port> ")) 
+print(HOST, H_PORT)
+
 SERVER = '127.0.0.1'
-PORT = 12137
+S_PORT = 12137
 INCOMMING_PACKET_LENGHT = 1024
 OUTCOMMING_PACKET_LENGHT = 4096
 
@@ -15,7 +19,8 @@ from utils.chat import Chat
 from utils.message import Message
 
 conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-conn.connect((SERVER, PORT))
+conn.bind((HOST, H_PORT))
+conn.connect((SERVER, S_PORT))
 
 cmd_lock = threading.Lock()
 cmd = ''
@@ -43,7 +48,6 @@ def handle_server(conn: socket.socket):
             else:
                 conn.sendall(b'\x00')
             cmd_lock.release()
-
             data = conn.recv(OUTCOMMING_PACKET_LENGHT)
 
             if data and data[0] != 0x00:

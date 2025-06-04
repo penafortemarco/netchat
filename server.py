@@ -13,8 +13,8 @@ from time import time_ns, sleep
 
 from utils.user import User
 from utils.users import Users
-from utils.chat import Chat
 from utils.message import Message
+from utils.chat import Chat
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -37,12 +37,13 @@ def clear():
 
 
 def handle_client(conn: socket.socket, addr: tuple[str, int]):
+    print("Drop")
     try:
-        user = users.get_user_by_ip(addr[0])
+        user = None
         while True:
             # For debugging purposes
-            clear()
-            chat.print_chat()
+            #clear()
+            #chat.print_chat()
 
             data = conn.recv(INCOMING_PACKET_LENGHT)
             
@@ -61,38 +62,44 @@ def handle_client(conn: socket.socket, addr: tuple[str, int]):
                     msg = Message(data_str, user.username, time_ns())
                     chat.add_msg(msg)
 
+            if user is None:
+                conn.sendall(b'\x00')
+                continue
+            
             for msg in chat.state:
                 if(msg.timestamp > user.last_update_timestamp):
                     msgs_to_send.append(msg)
-            
+
             if not msgs_to_send:
                 conn.sendall(b'\x00')
                 continue
             
             conn.sendall(json.dumps([m.to_dict() for m in msgs_to_send]).encode())
             users.update_user_last_timestamp(user, msgs_to_send[-1].timestamp)
-            
 
-    except BrokenPipeError:
+    except (BrokenPipeError, AttributeError) as e:
         pass
     finally:
-        users.update_user_last_timestamp(user, 0)
+        if user:
+            users.update_user_last_timestamp(user, 0)
         conn.close()
 
 
 signal.signal(signal.SIGINT, sig_handler)
 
-
-
 # Main logic
 while True:
+    #clear()
+    users.print_all_users()
+    sleep(0.1)
+
     conn, addr = s.accept()
     threading.Thread(
         target=handle_client, 
         args=(conn, addr), 
         daemon=True
     ).start()
-    sleep(0.1)
+
     
     
     
