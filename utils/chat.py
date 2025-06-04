@@ -6,9 +6,14 @@ class Chat:
         self.state = state if state is not None else []
 
     def add_msg(self, msg: Message):
-        if Message is None: 
+        if msg is None: 
             raise ValueError()
         
         self.state.append(msg)
+
+    def print_chat(self):
+        for msg in self.state:
+            print(f"{msg.user}> {msg.text}")
+
 
     
